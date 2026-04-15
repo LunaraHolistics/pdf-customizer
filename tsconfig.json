@@ -7,12 +7,7 @@
     "strict": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "allowImportingTsExtensions": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["client/src/*"]
-    },
-    "ignoreDeprecations": "6.0"
+    "allowImportingTsExtensions": true
   },
   "include": ["client/src"]
 }
