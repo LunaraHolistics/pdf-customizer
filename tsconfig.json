@@ -9,5 +9,19 @@
     "noEmit": true,
     "allowImportingTsExtensions": true
   },
-  "include": ["client/src"]
+  "include": [
+    "client/src/App.tsx",
+    "client/src/main.tsx",
+    "client/src/components/Canvas.tsx",
+    "client/src/components/Toolbar.tsx",
+    "client/src/components/LayerPanel.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "client/src/components/ui",
+    "client/src/pages",
+    "client/src/lib",
+    "client/src/hooks",
+    "client/src/const.ts"
+  ]
 }
