@@ -7,20 +7,20 @@ interface ToolbarProps {
 
 export default function Toolbar({ onLoadPdf, onAddText, onAddImage, onOpenHtm }: ToolbarProps) {
   return (
-    <div className="h-12 bg-[#2d2d2d] shadow-lg flex items-center px-4 gap-2 border-b border-[#444]">
-      <button onClick={onLoadPdf} className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded font-medium hover:bg-blue-700 transition-colors flex items-center gap-2">
-        <span>📄</span> Carregar PDF
+    <div className="flex items-center gap-2">
+      <button onClick={onLoadPdf} className="px-4 py-1.5 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors shadow">
+        CARREGAR PDF
       </button>
       
-      <div className="w-px h-6 bg-[#555] mx-1"></div>
-
-      <button onClick={onAddText} className="px-3 py-1.5 bg-[#404040] text-gray-200 text-sm rounded hover:bg-[#505050] transition-colors">✏️ Texto</button>
-      <button onClick={onAddImage} className="px-3 py-1.5 bg-[#404040] text-gray-200 text-sm rounded hover:bg-[#505050] transition-colors">🖼️ Imagem</button>
+      <button onClick={onAddText} className="px-3 py-1.5 bg-[#333] text-gray-300 text-xs font-medium rounded-lg hover:bg-[#444] transition-colors border border-[#444]">
+        ✏️ Texto
+      </button>
+      <button onClick={onAddImage} className="px-3 py-1.5 bg-[#333] text-gray-300 text-xs font-medium rounded-lg hover:bg-[#444] transition-colors border border-[#444]">
+        🖼️ Imagem
+      </button>
       
-      <div className="flex-1"></div>
-
-      <button onClick={onOpenHtm} className="px-3 py-1.5 bg-emerald-600 text-white text-sm rounded font-medium hover:bg-emerald-700 transition-colors flex items-center gap-2">
-        <span>🌐</span> Análise HTM
+      <button onClick={onOpenHtm} className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 transition-colors shadow ml-2">
+        ABRIR HTM
       </button>
     </div>
   );
