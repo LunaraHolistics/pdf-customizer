@@ -1,17 +1,9 @@
-import { createRoot } from "react-dom/client";
-import App from "./App";
-import "./index.css";
-import { registerServiceWorker, setupOnlineOfflineListeners } from "./lib/serviceWorker";
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
 
-// Register service worker for PWA
-if (import.meta.env.PROD) {
-  registerServiceWorker();
-}
-
-// Setup online/offline listeners
-setupOnlineOfflineListeners(
-  () => console.log('App online'),
-  () => console.log('App offline')
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
 );
-
-createRoot(document.getElementById("root")!).render(<App />);
