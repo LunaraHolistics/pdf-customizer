@@ -89,7 +89,7 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-[#121212] overflow-hidden text-white font-sans">
+    <div className="h-screen w-screen flex flex-col bg-[#121212] overflow-hidden text-gray-200 font-sans">
       <input type="file" ref={htmInputRef} accept=".htm,.html" style={{ display: 'none' }} onChange={(e) => {
         const file = e.target.files?.[0]; if (!file) return;
         const reader = new FileReader();
@@ -99,23 +99,38 @@ export default function App() {
       <input type="file" ref={pdfInputRef} accept=".pdf" style={{ display: 'none' }} onChange={handlePdfChange} />
       <input type="file" ref={imageInputRef} accept="image/*" style={{ display: 'none' }} onChange={handleImageChange} />
       
-      <Toolbar onLoadPdf={handleLoadPdf} onAddText={addTextLayer} onAddImage={handleAddImage} onOpenHtm={handleOpenHtm} />
-
-      <div className="flex flex-1 overflow-hidden">
-        
-        {/* BLOCO 1: Preview com fundo quadriculado */}
-        <div className="flex-1 p-6 flex items-center justify-center bg-grid overflow-auto">
-          <Canvas 
-            pdfUrl={pdfUrl} layers={layers} selectedLayerId={selectedLayerId} 
-            setSelectedLayerId={setSelectedLayerId}
-            onUpdateLayer={(id, props) => setLayers(prev => prev.map(l => l.id === id ? { ...l, ...props } : l))}
-          />
+      {/* CABEÇALHO COM TÍTULO E BOTOES */}
+      <header className="h-14 bg-[#1a1a1a] border-b border-[#333] flex items-center justify-between px-6 shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white text-sm">P</div>
+          <div>
+            <h1 className="text-sm font-bold tracking-wide text-white">PDF CUSTOMIZER</h1>
+            <p className="text-[10px] text-gray-500 -mt-0.5">Personalize seus documentos com facilidade</p>
+          </div>
         </div>
         
-        {/* BLOCO 2 & 3: Sidebars Direitas Escuras */}
-        <div className="w-80 bg-[#1e1e1e] border-l border-[#333] flex flex-col shadow-2xl">
+        <Toolbar onLoadPdf={handleLoadPdf} onAddText={addTextLayer} onAddImage={handleAddImage} onOpenHtm={handleOpenHtm} />
+      </header>
+
+      {/* CORPO DIVIDIDO EM BLOCOS */}
+      <div className="flex flex-1 overflow-hidden bg-[#0e0e0e] p-4 gap-4">
+        
+        {/* BLOCO 1: Preview (Caixa com fundo quadriculado) */}
+        <div className="flex-1 bg-grid rounded-xl border border-[#2a2a2a] p-6 flex items-center justify-center overflow-auto shadow-inner">
+          <div className="rounded-lg overflow-hidden shadow-2xl">
+            <Canvas 
+              pdfUrl={pdfUrl} layers={layers} selectedLayerId={selectedLayerId} 
+              setSelectedLayerId={setSelectedLayerId}
+              onUpdateLayer={(id, props) => setLayers(prev => prev.map(l => l.id === id ? { ...l, ...props } : l))}
+            />
+          </div>
+        </div>
+        
+        {/* BLOCO 2 & 3: Sidebars (Caixas empilhadas) */}
+        <div className="w-80 flex flex-col gap-4">
           
-          <div className="h-1/2 border-b border-[#333] flex flex-col">
+          {/* CAIXA: Lista de Camadas */}
+          <div className="bg-[#1e1e1e] rounded-xl border border-[#2a2a2a] flex flex-col overflow-hidden shadow-lg" style={{ height: '45%' }}>
             <LayerPanel 
               layers={layers} selectedLayerId={selectedLayerId}
               onSelectLayer={setSelectedLayerId} onDeleteLayer={deleteLayer}
@@ -123,7 +138,8 @@ export default function App() {
             />
           </div>
 
-          <div className="h-1/2 flex flex-col">
+          {/* CAIXA: Propriedades */}
+          <div className="bg-[#1e1e1e] rounded-xl border border-[#2a2a2a] flex flex-col overflow-hidden shadow-lg flex-1">
             <LayerProperties 
               selectedLayer={selectedLayer}
               onUpdateLayer={updateSelectedLayer}
