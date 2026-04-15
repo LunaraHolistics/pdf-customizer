@@ -37,6 +37,7 @@ export interface Layer {
   adjustments?: ImageAdjustments;
   applyToAllPages?: boolean; // For images/elements
   pageNumber?: number; // Specific page if not all pages
+  pageScope?: 'all' | 'last'; // Scope of page application
   isDeletable?: boolean; // Whether this layer can be deleted (false for PDF background)
 }
 
