@@ -13,13 +13,13 @@ export default function Canvas({ pdfUrl, layers, selectedLayerId, setSelectedLay
   return (
     <div className="relative bg-white shadow-lg" style={{ width: '595px', height: '842px' }}>
       
-      {/* REGRA MAIS IMPORTANTE: O PDF FICA ABAIXO E NÃO BLOQUEIA CLIQUES */}
+      {/* O PDF agora abre num IFRAME ao invés de IMG */}
       {pdfUrl && (
-        <img 
+        <iframe 
           src={pdfUrl} 
-          alt="PDF Preview" 
-          className="absolute top-0 left-0 w-full h-full object-contain"
-          style={{ zIndex: 0, pointerEvents: 'none' }} 
+          title="PDF Preview"
+          className="absolute top-0 left-0"
+          style={{ width: '100%', height: '100%', border: 'none', zIndex: 0, pointerEvents: 'none' }} 
         />
       )}
 
@@ -38,9 +38,10 @@ export default function Canvas({ pdfUrl, layers, selectedLayerId, setSelectedLay
             });
           }}
           style={{ 
-            zIndex: layer.zIndex, // Z-INDEX DINÂMICO
+            zIndex: layer.zIndex, 
             opacity: layer.opacity,
-            border: selectedLayerId === layer.id ? '2px solid blue' : '1px dashed gray'
+            border: selectedLayerId === layer.id ? '2px solid blue' : '1px dashed gray',
+            background: layer.type === 'text' ? 'rgba(255,255,255,0.9)' : 'transparent'
           }}
           onClick={() => setSelectedLayerId(layer.id)}
         >
