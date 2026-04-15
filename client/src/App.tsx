@@ -33,12 +33,14 @@ export default function App() {
 
     const reader = new FileReader();
     reader.onload = () => {
-      const blob = new Blob([reader.result], { type: 'text/html' });
-      const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
+      if (reader.result) { // CORREÇÃO AQUI: Checagem de segurança pro TypeScript
+        const blob = new Blob([reader.result], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+      }
     };
     reader.readAsText(file);
-    e.target.value = ''; // limpa o input
+    e.target.value = '';
   };
 
   const addTextLayer = () => {
