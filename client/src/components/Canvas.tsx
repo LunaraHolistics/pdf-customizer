@@ -18,7 +18,7 @@ export default function Canvas({ pdfUrl, layers, selectedLayerId, setSelectedLay
     return `brightness(${brightness}%) contrast(${contrast}%) saturate(${saturate}%)`;
   };
 
-  // A SOLUÇÃO: Estilo injetado diretamente nas bolinhas de redimensionamento
+  // Estilo das bolinhas de redimensionamento
   const handleBaseStyle = {
     width: 12,
     height: 12,
@@ -29,14 +29,13 @@ export default function Canvas({ pdfUrl, layers, selectedLayerId, setSelectedLay
   };
 
   return (
-    <div className="relative bg-white" style={{ width: '595px', height: '842px' }}>
+    <div style={{ width: '595px', height: '842px', position: 'relative', backgroundColor: 'white' }}>
       
       {pdfUrl && (
         <iframe 
           src={pdfUrl} 
           title="PDF Preview"
-          className="absolute top-0 left-0"
-          style={{ width: '100%', height: '100%', border: 'none', zIndex: 0, pointerEvents: 'none' }} 
+          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none', zIndex: 0, pointerEvents: 'none' }} 
         />
       )}
 
@@ -48,7 +47,7 @@ export default function Canvas({ pdfUrl, layers, selectedLayerId, setSelectedLay
             key={layer.id}
             size={{ width: layer.width, height: layer.height }}
             position={{ x: layer.x, y: layer.y }}
-            enableResizing={true} // Garantia de que está ligado
+            enableResizing={true}
             resizeHandleStyles={{
               topRight: handleBaseStyle,
               bottomRight: handleBaseStyle,
@@ -72,29 +71,16 @@ export default function Canvas({ pdfUrl, layers, selectedLayerId, setSelectedLay
             }}
             onClick={() => setSelectedLayerId(layer.id)}
           >
-            <div className="w-full h-full flex items-center justify-center text-sm p-2 overflow-hidden">
+            {/* DIV PURA COM ESTILO INLINE PARA NÃO BRIGAR COM O REACT-RND */}
+            <div style={{ width: '100%', height: '100%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {layer.type === 'text' ? (
                 <textarea 
                   value={layer.content} 
-                  className="w-full h-full resize-none focus:outline-none bg-transparent text-center"
+                  style={{ width: '100%', height: '100%', resize: 'none', border: 'none', outline: 'none', background: 'transparent', textAlign: 'center' }}
                   onChange={(e) => onUpdateLayer(layer.id, { content: e.target.value })}
                   onClick={(e) => e.stopPropagation()}
                 />
               ) : (
-                <img src={layer.content} alt="img" className="w-full h-full object-contain pointer-events-none" draggable={false} />
-              )}
-            </div>
-          </Rnd>
-        );
-      })}
-      
-      {!pdfUrl && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 bg-gray-50">
-          <span className="text-6xl mb-4 opacity-20">📄</span>
-          <p className="font-medium">Carregue um PDF para começar</p>
-          <p className="text-xs text-gray-400 mt-1">Suporta arquivos .pdf padrão</p>
-        </div>
-      )}
-    </div>
-  );
-}
+                <img 
+                  src={layer.content} 
+                  alt
