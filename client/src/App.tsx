@@ -17,6 +17,9 @@ export interface Layer {
   brightness?: number;
   contrast?: number;
   saturate?: number;
+  fontSize?: number;
+  color?: string;
+  textAlign?: string;
 }
 
 export default function App() {
@@ -59,7 +62,8 @@ export default function App() {
   const addTextLayer = () => {
     setLayers(prev => [...prev, {
       id: Date.now().toString(), type: 'text', name: 'Texto', content: 'Novo Texto',
-      x: 50, y: 50, width: 200, height: 50, zIndex: prev.length + 1, opacity: 1, visible: true
+      x: 150, y: 30, width: 300, height: 60, zIndex: prev.length + 1, opacity: 1, visible: true,
+      fontSize: 24, color: '#1f2937', textAlign: 'center'
     }]);
   };
 
@@ -89,7 +93,8 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-[#121212] overflow-hidden text-gray-200 font-sans">
+    <div className="flex flex-col h-screen bg-gray-100 text-gray-900 font-sans">
+      {/* Inputs Ocultos */}
       <input type="file" ref={htmInputRef} accept=".htm,.html" style={{ display: 'none' }} onChange={(e) => {
         const file = e.target.files?.[0]; if (!file) return;
         const reader = new FileReader();
@@ -99,54 +104,64 @@ export default function App() {
       <input type="file" ref={pdfInputRef} accept=".pdf" style={{ display: 'none' }} onChange={handlePdfChange} />
       <input type="file" ref={imageInputRef} accept="image/*" style={{ display: 'none' }} onChange={handleImageChange} />
       
-      {/* CABEÇALHO COM TÍTULO E BOTOES */}
-      <header className="h-14 bg-[#1a1a1a] border-b border-[#333] flex items-center justify-between px-6 shadow-lg">
+      {/* CABEÇALHO IGUAL REFERÊNCIA */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">PDF Customizer PWA</h1>
+          <p className="text-sm text-gray-500">Personalize seus documentos PDF com facilidade</p>
+        </div>
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white text-sm">P</div>
-          <div>
-            <h1 className="text-sm font-bold tracking-wide text-white">PDF CUSTOMIZER</h1>
-            <p className="text-[10px] text-gray-500 -mt-0.5">Personalize seus documentos com facilidade</p>
+          <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-md border border-gray-200">
+            <div className="w-2 h-2 bg-green-500 rounded-full"></div> Online
           </div>
+          <button onClick={handleOpenHtm} className="text-sm bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium shadow-sm">
+            Abrir HTM
+          </button>
+        </div>
+      </div>
+
+      {/* BARRA DE FERRAMENTAS (UPLOAD E BOTÕES) */}
+      <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between gap-4">
+        <button onClick={handleLoadPdf} className="px-4 py-2 bg-gray-100 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-200 text-sm font-medium">
+          📄 Carregar PDF
+        </button>
+        <Toolbar onAddText={addTextLayer} onAddImage={handleAddImage} />
+      </div>
+
+      {/* CORPO COM 3 COLUNAS EXATAS */}
+      <div className="flex flex-1 overflow-hidden gap-4 p-4">
+        
+        {/* COLUNA 1: Preview (Expandido) */}
+        <div className="flex-1 bg-grid rounded-lg border border-gray-200 p-6 flex items-center justify-center overflow-auto shadow-inner max-w-4xl">
+          <Canvas 
+            pdfUrl={pdfUrl} layers={layers} selectedLayerId={selectedLayerId} 
+            setSelectedLayerId={setSelectedLayerId}
+            onUpdateLayer={(id, props) => setLayers(prev => prev.map(l => l.id === id ? { ...l, ...props } : l))}
+          />
         </div>
         
-        <Toolbar onLoadPdf={handleLoadPdf} onAddText={addTextLayer} onAddImage={handleAddImage} onOpenHtm={handleOpenHtm} />
-      </header>
-
-      {/* CORPO DIVIDIDO EM BLOCOS */}
-      <div className="flex flex-1 overflow-hidden bg-[#0e0e0e] p-4 gap-4">
-        
-        {/* BLOCO 1: Preview (Caixa com fundo quadriculado) */}
-        <div className="flex-1 bg-grid rounded-xl border border-[#2a2a2a] p-6 flex items-center justify-center overflow-auto shadow-inner">
-          <div className="rounded-lg overflow-hidden shadow-2xl">
-            <Canvas 
-              pdfUrl={pdfUrl} layers={layers} selectedLayerId={selectedLayerId} 
-              setSelectedLayerId={setSelectedLayerId}
-              onUpdateLayer={(id, props) => setLayers(prev => prev.map(l => l.id === id ? { ...l, ...props } : l))}
-            />
-          </div>
+        {/* COLUNA 2: Lista de Camadas (Larga) */}
+        <div className="w-56 flex flex-col bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden flex-shrink-0">
+          <LayerPanel 
+            layers={layers} selectedLayerId={selectedLayerId}
+            onSelectLayer={setSelectedLayerId} onDeleteLayer={deleteLayer}
+            onMoveLayer={moveLayer} onToggleVisibility={toggleVisibility}
+          />
         </div>
-        
-        {/* BLOCO 2 & 3: Sidebars (Caixas empilhadas) */}
-        <div className="w-80 flex flex-col gap-4">
-          
-          {/* CAIXA: Lista de Camadas */}
-          <div className="bg-[#1e1e1e] rounded-xl border border-[#2a2a2a] flex flex-col overflow-hidden shadow-lg" style={{ height: '45%' }}>
-            <LayerPanel 
-              layers={layers} selectedLayerId={selectedLayerId}
-              onSelectLayer={setSelectedLayerId} onDeleteLayer={deleteLayer}
-              onMoveLayer={moveLayer} onToggleVisibility={toggleVisibility}
-            />
-          </div>
 
-          {/* CAIXA: Propriedades */}
-          <div className="bg-[#1e1e1e] rounded-xl border border-[#2a2a2a] flex flex-col overflow-hidden shadow-lg flex-1">
-            <LayerProperties 
-              selectedLayer={selectedLayer}
-              onUpdateLayer={updateSelectedLayer}
-            />
-          </div>
-
+        {/* COLUNA 3: Propriedades da Camada (Larga e Rolável) */}
+        <div className="w-72 flex flex-col overflow-y-auto gap-4 flex-shrink-0">
+          <LayerProperties 
+            selectedLayer={selectedLayer}
+            onUpdateLayer={updateSelectedLayer}
+          />
         </div>
+
+      </div>
+
+      {/* RODAPÉ SIMPLES */}
+      <div className="bg-white border-t border-gray-200 px-6 py-3 text-center text-sm text-gray-500">
+        ©2026 - PDF Customizer PWA. Todos os direitos reservados.
       </div>
     </div>
   );
