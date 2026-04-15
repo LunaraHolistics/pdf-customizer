@@ -5,18 +5,13 @@
  */
 
 import { useCallback, useMemo } from 'react';
-import { PDFDocument, PDFPage, rgb, degrees } from 'pdf-lib';
-import { Layer, TextLayer, CoordinateMapping } from '@/types';
-import {
-  pixelToPoints,
-  screenSizeToPdfSize,
-} from '@/lib/coordinateMapping';
+import { PDFDocument, PDFPage, rgb, StandardFonts } from 'pdf-lib';
+import type { Layer, TextLayer } from '@/types';
 
 interface UsePdfProcessorReturn {
   generatePDF: (
     layers: Layer[],
-    pdfFile?: ArrayBuffer,
-    mapping?: CoordinateMapping
+    pdfBuffer?: ArrayBuffer
   ) => Promise<ArrayBuffer>;
   loadPDF: (file: File) => Promise<ArrayBuffer>;
   getPDFPageCount: (pdfBuffer: ArrayBuffer) => Promise<number>;
@@ -28,21 +23,21 @@ export const usePdfProcessor = (): UsePdfProcessorReturn => {
   const generatePDF = useCallback(
     async (
       layers: Layer[],
-      pdfFile?: ArrayBuffer,
-      mapping?: CoordinateMapping
+      pdfBuffer?: ArrayBuffer
     ): Promise<ArrayBuffer> => {
       let pdfDoc: PDFDocument;
 
-      if (pdfFile) {
+      if (pdfBuffer) {
         // Load existing PDF
-        pdfDoc = await PDFDocument.load(pdfFile);
+        pdfDoc = await PDFDocument.load(pdfBuffer);
       } else {
         // Create new PDF
         pdfDoc = await PDFDocument.create();
-        const page = pdfDoc.addPage([612, 792]); // Letter size
+        pdfDoc.addPage([612, 792]); // Letter size
       }
 
       const pages = pdfDoc.getPages();
+      const pageCount = pages.length;
 
       // Sort layers by zIndex
       const sortedLayers = [...layers].sort((a, b) => a.zIndex - b.zIndex);
@@ -51,49 +46,59 @@ export const usePdfProcessor = (): UsePdfProcessorReturn => {
       for (const layer of sortedLayers) {
         if (!layer.visible) continue;
 
-        const pagesToApply = layer.applyToAllPages
-          ? pages
-          : layer.pageNumber !== undefined
-            ? [pages[layer.pageNumber]]
-            : [pages[pages.length - 1]];
+        // Determine which pages to apply the layer to
+        let pagesToApply: PDFPage[] = [];
+        
+        if (layer.pageScope === 'all') {
+          pagesToApply = pages;
+        } else if (layer.pageScope === 'last') {
+          pagesToApply = [pages[pages.length - 1]];
+        } else if (layer.pageNumber !== undefined && pages[layer.pageNumber]) {
+          pagesToApply = [pages[layer.pageNumber]];
+        } else {
+          pagesToApply = [pages[pages.length - 1]]; // Default to last page
+        }
 
         for (const page of pagesToApply) {
           if (!page) continue;
 
           if (layer.type === 'text') {
-            await addTextLayer(page, layer as TextLayer, mapping);
+            await addTextLayer(page, layer as TextLayer, pdfDoc);
           } else if (layer.type === 'image' || layer.type === 'logo' || layer.type === 'background') {
-            await addImageLayer(page, layer, mapping);
+            await addImageLayer(page, layer, pdfDoc);
           }
         }
       }
 
-      return await pdfDoc.save();
+      const pdfBytes = await pdfDoc.save();
+      return pdfBytes.buffer as ArrayBuffer;
     },
     []
   );
 
   // Add text layer to PDF page
   const addTextLayer = useCallback(
-    async (page: PDFPage, layer: TextLayer, mapping?: CoordinateMapping) => {
-      const { width, height } = page.getSize();
+    async (page: PDFPage, layer: TextLayer, pdfDoc: PDFDocument) => {
+      const { width: pageWidth, height: pageHeight } = page.getSize();
+      
+      // Convert pixels to points (assuming 96 DPI screen, 72 DPI PDF)
+      const pxToPt = 72 / 96;
+      
+      // Calculate position (PDF coordinates start from bottom-left)
+      const x = layer.position.x * pxToPt;
+      const y = pageHeight - (layer.position.y * pxToPt) - (layer.size.height * pxToPt);
 
-      let x = layer.position.x;
-      let y = height - layer.position.y - layer.size.height;
-
-      if (mapping) {
-        x = pixelToPoints(layer.position.x, mapping);
-        y = height - pixelToPoints(layer.position.y + layer.size.height, mapping);
-      }
+      // Embed font
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
       page.drawText(layer.content, {
         x,
         y,
-        size: layer.fontSize,
-        font: undefined, // Use default font
-        color: hexToRgb(layer.color),
-        maxWidth: layer.size.width,
-        lineHeight: layer.lineHeight,
+        size: (layer.fontSize || 12) * pxToPt,
+        font,
+        color: hexToRgb(layer.color || '#000000'),
+        maxWidth: layer.size.width * pxToPt,
+        lineHeight: (layer.lineHeight || 1.2) * (layer.fontSize || 12) * pxToPt,
       });
     },
     []
@@ -101,13 +106,50 @@ export const usePdfProcessor = (): UsePdfProcessorReturn => {
 
   // Add image layer to PDF page
   const addImageLayer = useCallback(
-    async (page: PDFPage, layer: Layer, mapping?: CoordinateMapping) => {
-      const { width, height } = page.getSize();
+    async (page: PDFPage, layer: Layer, pdfDoc: PDFDocument) => {
+      const { width: pageWidth, height: pageHeight } = page.getSize();
+      
+      // Convert pixels to points
+      const pxToPt = 72 / 96;
 
       try {
-        // For now, we'll skip image embedding in PDF
-        // In production, use proper image embedding with pdfjs or canvas
-        console.log('Image layer processing:', layer.name);
+        // Check if content is base64 or URL
+        let imageData: Uint8Array;
+        
+        if (layer.content.startsWith('data:image/')) {
+          // Base64 image
+          const base64Data = layer.content.split(',')[1];
+          imageData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+        } else {
+          // Skip external URLs for now
+          console.log('Skipping external image URL:', layer.content);
+          return;
+        }
+
+        // Embed image based on type
+        let image;
+        if (layer.content.includes('image/png')) {
+          image = await pdfDoc.embedPng(imageData);
+        } else if (layer.content.includes('image/jpeg') || layer.content.includes('image/jpg')) {
+          image = await pdfDoc.embedJpg(imageData);
+        } else {
+          console.log('Unsupported image format:', layer.name);
+          return;
+        }
+
+        // Calculate position (PDF coordinates start from bottom-left)
+        const x = layer.position.x * pxToPt;
+        const y = pageHeight - (layer.position.y * pxToPt) - (layer.size.height * pxToPt);
+        const width = layer.size.width * pxToPt;
+        const height = layer.size.height * pxToPt;
+
+        page.drawImage(image, {
+          x,
+          y,
+          width,
+          height,
+          opacity: (layer.adjustments?.opacity ?? 100) / 100,
+        });
       } catch (error) {
         console.error('Error adding image layer:', error);
       }
