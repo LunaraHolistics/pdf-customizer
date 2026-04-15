@@ -19,27 +19,42 @@ export default function App() {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [layers, setLayers] = useState<Layer[]>([]);
   const [selectedLayerId, setSelectedLayerId] = useState<string | null>(null);
+  
   const htmInputRef = useRef<HTMLInputElement>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
-  const handleOpenHtm = () => {
-    if (htmInputRef.current) {
-      htmInputRef.current.click();
-    }
+  const handleOpenHtm = () => htmInputRef.current?.click();
+  
+  const handleLoadPdf = () => pdfInputRef.current?.click();
+  const handlePdfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPdfUrl(URL.createObjectURL(file));
+    e.target.value = '';
   };
 
-  const handleHtmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAddImage = () => imageInputRef.current?.click();
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = () => {
-      if (reader.result) { // CORREÇÃO AQUI: Checagem de segurança pro TypeScript
-        const blob = new Blob([reader.result], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
+      if (reader.result) {
+        const newLayer: Layer = {
+          id: Date.now().toString(),
+          type: 'image',
+          content: reader.result as string, // Base64 da imagem
+          x: 100, y: 100,
+          width: 200, height: 200,
+          zIndex: layers.length + 1,
+          opacity: 1,
+        };
+        setLayers([...layers, newLayer]);
       }
     };
-    reader.readAsText(file);
+    reader.readAsDataURL(file); // Lê como URL (Base64)
     e.target.value = '';
   };
 
@@ -63,17 +78,24 @@ export default function App() {
 
   return (
     <div className="h-screen w-screen flex flex-col bg-gray-100 overflow-hidden">
-      <input 
-        type="file" 
-        ref={htmInputRef} 
-        accept=".htm,.html" 
-        style={{ display: 'none' }} 
-        onChange={handleHtmChange} 
-      />
+      {/* Inputs Ocultos */}
+      <input type="file" ref={htmInputRef} accept=".htm,.html" style={{ display: 'none' }} onChange={(e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => { if(reader.result) { window.open(URL.createObjectURL(new Blob([reader.result], { type: 'text/html' })), '_blank'); } };
+        reader.readAsText(file);
+        e.target.value = '';
+      }} />
+
+      <input type="file" ref={pdfInputRef} accept=".pdf" style={{ display: 'none' }} onChange={handlePdfChange} />
+      
+      <input type="file" ref={imageInputRef} accept="image/*" style={{ display: 'none' }} onChange={handleImageChange} />
       
       <Toolbar 
-        onLoadPdf={setPdfUrl} 
-        onAddText={addTextLayer} 
+        onLoadPdf={handleLoadPdf} 
+        onAddText={addTextLayer}
+        onAddImage={handleAddImage}
         onOpenHtm={handleOpenHtm} 
       />
 
