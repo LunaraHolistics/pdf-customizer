@@ -30,7 +30,6 @@ export default function App() {
 
   const selectedLayer = layers.find(l => l.id === selectedLayerId) || null;
 
-  // Funções de Arquivo
   const handleOpenHtm = () => htmInputRef.current?.click();
   const handleLoadPdf = () => pdfInputRef.current?.click();
   
@@ -64,7 +63,6 @@ export default function App() {
     }]);
   };
 
-  // Funções de Camada
   const deleteLayer = (id: string) => {
     setLayers(prev => prev.filter(l => l.id !== id));
     if (selectedLayerId === id) setSelectedLayerId(null);
@@ -91,8 +89,7 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-gray-100 overflow-hidden font-sans">
-      {/* Inputs Ocultos */}
+    <div className="h-screen w-screen flex flex-col bg-[#121212] overflow-hidden text-white font-sans">
       <input type="file" ref={htmInputRef} accept=".htm,.html" style={{ display: 'none' }} onChange={(e) => {
         const file = e.target.files?.[0]; if (!file) return;
         const reader = new FileReader();
@@ -104,11 +101,10 @@ export default function App() {
       
       <Toolbar onLoadPdf={handleLoadPdf} onAddText={addTextLayer} onAddImage={handleAddImage} onOpenHtm={handleOpenHtm} />
 
-      {/* LAYOUT PRINCIPAL: Preview + Sidebars */}
       <div className="flex flex-1 overflow-hidden">
         
-        {/* BLOCO 1: Preview do PDF (Expandido) */}
-        <div className="flex-1 p-6 flex items-center justify-center bg-gray-200 overflow-auto">
+        {/* BLOCO 1: Preview com fundo quadriculado */}
+        <div className="flex-1 p-6 flex items-center justify-center bg-grid overflow-auto">
           <Canvas 
             pdfUrl={pdfUrl} layers={layers} selectedLayerId={selectedLayerId} 
             setSelectedLayerId={setSelectedLayerId}
@@ -116,11 +112,10 @@ export default function App() {
           />
         </div>
         
-        {/* BLOCO 2 & 3: Sidebars Direitas (Empilhadas) */}
-        <div className="w-80 bg-white border-l flex flex-col shadow-lg">
+        {/* BLOCO 2 & 3: Sidebars Direitas Escuras */}
+        <div className="w-80 bg-[#1e1e1e] border-l border-[#333] flex flex-col shadow-2xl">
           
-          {/* BLOCO 2: Lista de Camadas (Metade de cima) */}
-          <div className="h-1/2 border-b flex flex-col">
+          <div className="h-1/2 border-b border-[#333] flex flex-col">
             <LayerPanel 
               layers={layers} selectedLayerId={selectedLayerId}
               onSelectLayer={setSelectedLayerId} onDeleteLayer={deleteLayer}
@@ -128,7 +123,6 @@ export default function App() {
             />
           </div>
 
-          {/* BLOCO 3: Seleção/Edição da Camada (Metade de baixo) */}
           <div className="h-1/2 flex flex-col">
             <LayerProperties 
               selectedLayer={selectedLayer}
